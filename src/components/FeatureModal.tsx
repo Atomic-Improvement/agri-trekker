@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Dialog, 
@@ -15,6 +16,30 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+
+// Function to generate cluster data for visualization
+const generateClusterData = (centers, pointsPerCluster = 20, noiseLevel = 0.3) => {
+  let data = [];
+  centers.forEach((center, clusterIndex) => {
+    for (let i = 0; i < pointsPerCluster; i++) {
+      // Add random noise to each point around the center
+      const noiseX = (Math.random() - 0.5) * noiseLevel;
+      const noiseY = (Math.random() - 0.5) * noiseLevel;
+      
+      // Ensure points stay within the 0-1 range
+      const x = Math.max(0, Math.min(1, center.x + noiseX));
+      const y = Math.max(0, Math.min(1, center.y + noiseY));
+      
+      data.push({
+        x,
+        y,
+        z: 1, // Used for ZAxis scaling in ScatterChart
+        cluster: `Cluster ${clusterIndex + 1}`
+      });
+    }
+  });
+  return data;
+};
 
 const farmerData = [
   { month: 'Jan', registrations: 65, approvals: 53 },
