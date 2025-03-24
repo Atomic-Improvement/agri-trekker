@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardProps extends Omit<HTMLMotionProps<"div">, "className" | "children" | "index"> {
   className?: string;
   children: React.ReactNode;
   index?: number;
