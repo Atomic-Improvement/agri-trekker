@@ -1,11 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from './Card';
 import { cn } from '@/lib/utils';
 import { Users, Map, FileSpreadsheet, BarChart3, ShieldCheck, Layers } from 'lucide-react';
 import FeatureModal from './FeatureModal';
+import { fetchFeatures } from '../utils/api';
+import { useQuery } from '@tanstack/react-query';
 
-const features = [
+// Default features until we load from API
+const defaultFeatures = [
   {
     icon: <Users className="h-10 w-10 text-blue-500" />,
     title: 'Farmer Management',
@@ -38,6 +41,20 @@ const features = [
   }
 ];
 
+// Map icon names from backend to Lucide components
+const getIconComponent = (iconName: string, color: string) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    'users': <Users className={`h-10 w-10 ${color}`} />,
+    'map': <Map className={`h-10 w-10 ${color}`} />,
+    'file-spreadsheet': <FileSpreadsheet className={`h-10 w-10 ${color}`} />,
+    'bar-chart-3': <BarChart3 className={`h-10 w-10 ${color}`} />,
+    'shield-check': <ShieldCheck className={`h-10 w-10 ${color}`} />,
+    'layers': <Layers className={`h-10 w-10 ${color}`} />
+  };
+  
+  return iconMap[iconName] || <Layers className={`h-10 w-10 ${color}`} />;
+};
+
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
@@ -63,8 +80,25 @@ const FeatureCard = ({ icon, title, description, index, onClick }: FeatureCardPr
 };
 
 const Features = () => {
-  const [selectedFeature, setSelectedFeature] = useState<typeof features[0] | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState<typeof defaultFeatures[0] | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  
+  // Fetch features from Django API
+  const { data: apiFeatures, isLoading, error } = useQuery({
+    queryKey: ['features'],
+    queryFn: fetchFeatures,
+    // If API fails, use default features
+    onError: (err) => {
+      console.error("Failed to fetch features:", err);
+    }
+  });
+  
+  // Transform API data to component format
+  const features = apiFeatures ? apiFeatures.map((feature: any) => ({
+    icon: getIconComponent(feature.icon_name, feature.icon_color),
+    title: feature.title,
+    description: feature.description,
+  })) : defaultFeatures;
 
   const handleFeatureClick = (feature: typeof features[0]) => {
     setSelectedFeature(feature);
