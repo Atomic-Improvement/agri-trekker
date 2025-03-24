@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Card from './Card';
 import { cn } from '@/lib/utils';
 import { Users, Map, FileSpreadsheet, BarChart3, ShieldCheck, Layers } from 'lucide-react';
+import FeatureModal from './FeatureModal';
 
 const features = [
   {
@@ -42,11 +43,16 @@ interface FeatureCardProps {
   title: string;
   description: string;
   index: number;
+  onClick: () => void;
 }
 
-const FeatureCard = ({ icon, title, description, index }: FeatureCardProps) => {
+const FeatureCard = ({ icon, title, description, index, onClick }: FeatureCardProps) => {
   return (
-    <Card index={index} className="h-full">
+    <Card 
+      index={index} 
+      className="h-full cursor-pointer transition-all hover:-translate-y-2 hover:shadow-xl" 
+      onClick={onClick}
+    >
       <div className="p-2 rounded-full inline-flex items-center justify-center bg-secondary mb-5">
         {icon}
       </div>
@@ -57,6 +63,18 @@ const FeatureCard = ({ icon, title, description, index }: FeatureCardProps) => {
 };
 
 const Features = () => {
+  const [selectedFeature, setSelectedFeature] = useState<typeof features[0] | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleFeatureClick = (feature: typeof features[0]) => {
+    setSelectedFeature(feature);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
+
   return (
     <section id="features" className="py-20 md:py-32 relative overflow-hidden">
       {/* Background Elements */}
@@ -86,10 +104,17 @@ const Features = () => {
               title={feature.title}
               description={feature.description}
               index={index}
+              onClick={() => handleFeatureClick(feature)}
             />
           ))}
         </div>
       </div>
+
+      <FeatureModal 
+        isOpen={modalOpen} 
+        onClose={handleCloseModal} 
+        feature={selectedFeature} 
+      />
     </section>
   );
 };

@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import Footer from '@/components/Footer';
+import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 import { motion, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 
@@ -26,6 +27,7 @@ const Index = () => {
       
       <main>
         <Hero />
+        <AnalyticsDashboard />
         <Features />
         
         {/* About Section */}
