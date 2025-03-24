@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
@@ -14,12 +14,21 @@ const Index = () => {
     triggerOnce: true,
     threshold: 0.1,
   });
+  
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   useEffect(() => {
     if (inView) {
       controls.start('visible');
     }
   }, [controls, inView]);
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormSubmitted(true);
+    // Store in localStorage that form was submitted
+    localStorage.setItem('contactFormSubmitted', 'true');
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,7 +87,7 @@ const Index = () => {
                   About Agri-Trek
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
-                  Empowering Agricultural Management Through Technology
+                  Empowering Indian Agricultural Management Through Technology
                 </h2>
                 <p className="text-muted-foreground mb-6">
                   Agri-Trek is a comprehensive agricultural management system designed to streamline the administration of farmer data, land parcels, and government schemes while providing cutting-edge aerial image analysis for precision farming.
@@ -94,7 +103,7 @@ const Index = () => {
                       </svg>
                     </div>
                     <div>
-                      <p className="text-foreground">Simple and intuitive user interface designed for ease of use in rural areas</p>
+                      <p className="text-foreground">Simple and intuitive user interface designed for ease of use in rural areas of India</p>
                     </div>
                   </div>
                   <div className="flex items-start">
@@ -155,7 +164,7 @@ const Index = () => {
                           </div>
                           <div>
                             <p className="text-primary-foreground/70">Phone</p>
-                            <p className="text-primary-foreground">+1 (555) 123-4567</p>
+                            <p className="text-primary-foreground">+91 80-2356-7890</p>
                           </div>
                         </div>
                         
@@ -167,7 +176,7 @@ const Index = () => {
                           </div>
                           <div>
                             <p className="text-primary-foreground/70">Email</p>
-                            <p className="text-primary-foreground">info@agritrek.com</p>
+                            <p className="text-primary-foreground">info@agritrek.in</p>
                           </div>
                         </div>
                         
@@ -180,7 +189,7 @@ const Index = () => {
                           </div>
                           <div>
                             <p className="text-primary-foreground/70">Address</p>
-                            <p className="text-primary-foreground">123 AgriTech Lane, Farmland, CA 94107</p>
+                            <p className="text-primary-foreground">123 MG Road, Indiranagar, Bengaluru 560038</p>
                           </div>
                         </div>
                       </div>
@@ -206,55 +215,75 @@ const Index = () => {
                   </div>
                   
                   <div className="p-8 md:p-12 bg-white">
-                    <form>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-                        <div>
-                          <label htmlFor="first-name" className="block text-sm font-medium text-foreground mb-2">First Name</label>
+                    {!formSubmitted ? (
+                      <form onSubmit={handleFormSubmit}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                          <div>
+                            <label htmlFor="first-name" className="block text-sm font-medium text-foreground mb-2">First Name</label>
+                            <input
+                              type="text"
+                              id="first-name"
+                              className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                              placeholder="Rajesh"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="last-name" className="block text-sm font-medium text-foreground mb-2">Last Name</label>
+                            <input
+                              type="text"
+                              id="last-name"
+                              className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                              placeholder="Kumar"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="mb-6">
+                          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">Email Address</label>
                           <input
-                            type="text"
-                            id="first-name"
+                            type="email"
+                            id="email"
                             className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                            placeholder="John"
+                            placeholder="rajesh@example.com"
                           />
                         </div>
-                        <div>
-                          <label htmlFor="last-name" className="block text-sm font-medium text-foreground mb-2">Last Name</label>
-                          <input
-                            type="text"
-                            id="last-name"
-                            className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                            placeholder="Doe"
-                          />
+                        
+                        <div className="mb-6">
+                          <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">Message</label>
+                          <textarea
+                            id="message"
+                            rows={4}
+                            className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
+                            placeholder="How can we help you?"
+                          ></textarea>
                         </div>
+                        
+                        <button
+                          type="submit"
+                          className="w-full bg-primary text-primary-foreground font-medium py-3 px-6 rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                        >
+                          Send Message
+                        </button>
+                      </form>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full py-12">
+                        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-6">
+                          <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold text-center mb-2">Thank You!</h3>
+                        <p className="text-muted-foreground text-center mb-6">
+                          Your message has been received. We'll contact you within 24 hours.
+                        </p>
+                        <button
+                          onClick={() => setFormSubmitted(false)}
+                          className="px-4 py-2 bg-secondary/50 rounded-md hover:bg-secondary transition-colors"
+                        >
+                          Send Another Message
+                        </button>
                       </div>
-                      
-                      <div className="mb-6">
-                        <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">Email Address</label>
-                        <input
-                          type="email"
-                          id="email"
-                          className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                          placeholder="john@example.com"
-                        />
-                      </div>
-                      
-                      <div className="mb-6">
-                        <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">Message</label>
-                        <textarea
-                          id="message"
-                          rows={4}
-                          className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
-                          placeholder="How can we help you?"
-                        ></textarea>
-                      </div>
-                      
-                      <button
-                        type="submit"
-                        className="w-full bg-primary text-primary-foreground font-medium py-3 px-6 rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
-                      >
-                        Send Message
-                      </button>
-                    </form>
+                    )}
                   </div>
                 </div>
               </div>

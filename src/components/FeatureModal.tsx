@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -9,12 +9,13 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Upload, FileJson, X } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
+import { toast } from "sonner";
 
 const farmerData = [
   { month: 'Jan', registrations: 65, approvals: 53 },
@@ -26,19 +27,19 @@ const farmerData = [
 ];
 
 const landData = [
-  { region: 'North', area: 1200, parcels: 220 },
-  { region: 'South', area: 1800, parcels: 350 },
-  { region: 'East', area: 1450, parcels: 280 },
-  { region: 'West', area: 1650, parcels: 320 },
-  { region: 'Central', area: 2100, parcels: 420 },
+  { region: 'Karnataka', area: 1200, parcels: 220 },
+  { region: 'Maharashtra', area: 1800, parcels: 350 },
+  { region: 'Tamil Nadu', area: 1450, parcels: 280 },
+  { region: 'Punjab', area: 1650, parcels: 320 },
+  { region: 'Uttar Pradesh', area: 2100, parcels: 420 },
 ];
 
 const schemeData = [
-  { scheme: 'Crop Insurance', applications: 320, approvals: 280, rejections: 40 },
-  { scheme: 'Fertilizer Subsidy', applications: 450, approvals: 390, rejections: 60 },
-  { scheme: 'Seed Distribution', applications: 280, approvals: 230, rejections: 50 },
-  { scheme: 'Farm Equipment', applications: 190, approvals: 150, rejections: 40 },
-  { scheme: 'Irrigation Support', applications: 210, approvals: 180, rejections: 30 },
+  { scheme: 'PM Fasal Bima Yojana', applications: 320, approvals: 280, rejections: 40 },
+  { scheme: 'PM Kisan Samman Nidhi', applications: 450, approvals: 390, rejections: 60 },
+  { scheme: 'Krishi Sinchayee Yojana', applications: 280, approvals: 230, rejections: 50 },
+  { scheme: 'Rashtriya Krishi Vikas Yojana', applications: 190, approvals: 150, rejections: 40 },
+  { scheme: 'Kisan Credit Card', applications: 210, approvals: 180, rejections: 30 },
 ];
 
 // Sample data for the clustering visualization
@@ -71,11 +72,11 @@ const dashboardData = {
   schemes: 48,
   images: 5429,
   recentApplications: [
-    { id: 1, farmer: 'John Smith', scheme: 'Crop Insurance', date: '2023-05-10', status: 'Approved' },
-    { id: 2, farmer: 'Maria Garcia', scheme: 'Fertilizer Subsidy', date: '2023-05-11', status: 'Pending' },
-    { id: 3, farmer: 'Robert Wilson', scheme: 'Irrigation Support', date: '2023-05-12', status: 'Rejected' },
-    { id: 4, farmer: 'Sarah Johnson', scheme: 'Seed Distribution', date: '2023-05-13', status: 'Approved' },
-    { id: 5, farmer: 'James Brown', scheme: 'Farm Equipment', date: '2023-05-14', status: 'Pending' },
+    { id: 1, farmer: 'Rajesh Kumar', scheme: 'PM Fasal Bima Yojana', date: '2023-05-10', status: 'Approved' },
+    { id: 2, farmer: 'Priya Sharma', scheme: 'PM Kisan Samman Nidhi', date: '2023-05-11', status: 'Pending' },
+    { id: 3, farmer: 'Amit Patel', scheme: 'Krishi Sinchayee Yojana', date: '2023-05-12', status: 'Rejected' },
+    { id: 4, farmer: 'Sunita Verma', scheme: 'Rashtriya Krishi Vikas Yojana', date: '2023-05-13', status: 'Approved' },
+    { id: 5, farmer: 'Vikram Singh', scheme: 'Kisan Credit Card', date: '2023-05-14', status: 'Pending' },
   ]
 };
 
@@ -92,11 +93,15 @@ interface FeatureModalProps {
 }
 
 const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature }) => {
-  const [clusterData, setClusterData] = React.useState(() => 
+  const [clusterData, setClusterData] = useState(() => 
     generateClusterData(initialClusterCenters, 30)
   );
-  const [clusterCount, setClusterCount] = React.useState(3);
-  const [noiseLevel, setNoiseLevel] = React.useState(30);
+  const [clusterCount, setClusterCount] = useState(3);
+  const [noiseLevel, setNoiseLevel] = useState(30);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedJson, setSelectedJson] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
 
   const regenerateClusters = () => {
     // Generate random centers
@@ -106,6 +111,43 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
     }));
     
     setClusterData(generateClusterData(centers, 30, noiseLevel / 100));
+    toast.success("Clusters regenerated successfully!");
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setSelectedImage(result);
+        // Store in localStorage
+        localStorage.setItem('aerialImage', result);
+        toast.success(`Image "${file.name}" uploaded and stored locally`);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleJsonUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const result = e.target?.result as string;
+          // Try to parse JSON to validate it
+          JSON.parse(result);
+          setSelectedJson(result);
+          // Store in localStorage
+          localStorage.setItem('clusterData', result);
+          toast.success(`JSON data "${file.name}" uploaded and stored locally`);
+        } catch (error) {
+          toast.error("Invalid JSON file. Please upload a valid JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   // Determine which content to show based on the feature title
@@ -162,37 +204,37 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
                         </thead>
                         <tbody>
                           <tr className="border-t">
-                            <td className="px-4 py-2">John Smith</td>
+                            <td className="px-4 py-2">Rajesh Kumar</td>
                             <td className="px-4 py-2">45</td>
-                            <td className="px-4 py-2">North Region</td>
+                            <td className="px-4 py-2">Bengaluru, Karnataka</td>
                             <td className="px-4 py-2">5.2</td>
                             <td className="px-4 py-2"><span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span></td>
                           </tr>
                           <tr className="border-t">
-                            <td className="px-4 py-2">Maria Garcia</td>
+                            <td className="px-4 py-2">Priya Sharma</td>
                             <td className="px-4 py-2">38</td>
-                            <td className="px-4 py-2">South Region</td>
+                            <td className="px-4 py-2">Mysuru, Karnataka</td>
                             <td className="px-4 py-2">3.8</td>
                             <td className="px-4 py-2"><span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span></td>
                           </tr>
                           <tr className="border-t">
-                            <td className="px-4 py-2">Robert Wilson</td>
+                            <td className="px-4 py-2">Amit Patel</td>
                             <td className="px-4 py-2">52</td>
-                            <td className="px-4 py-2">East Region</td>
+                            <td className="px-4 py-2">Mangaluru, Karnataka</td>
                             <td className="px-4 py-2">7.5</td>
                             <td className="px-4 py-2"><span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span></td>
                           </tr>
                           <tr className="border-t">
-                            <td className="px-4 py-2">Sarah Johnson</td>
+                            <td className="px-4 py-2">Sunita Verma</td>
                             <td className="px-4 py-2">41</td>
-                            <td className="px-4 py-2">West Region</td>
+                            <td className="px-4 py-2">Hubli, Karnataka</td>
                             <td className="px-4 py-2">4.2</td>
                             <td className="px-4 py-2"><span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Pending</span></td>
                           </tr>
                           <tr className="border-t">
-                            <td className="px-4 py-2">James Brown</td>
+                            <td className="px-4 py-2">Vikram Singh</td>
                             <td className="px-4 py-2">49</td>
-                            <td className="px-4 py-2">Central Region</td>
+                            <td className="px-4 py-2">Dharwad, Karnataka</td>
                             <td className="px-4 py-2">6.7</td>
                             <td className="px-4 py-2"><span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span></td>
                           </tr>
@@ -247,7 +289,7 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
                       <div className="absolute inset-0 bg-[url('https://img.freepik.com/free-vector/topographic-contour-lines-map-seamless-pattern_1284-52862.jpg')] bg-cover opacity-20"></div>
                       <div className="absolute inset-0 p-6 flex flex-col justify-center items-center">
                         <div className="text-center p-6 bg-white/80 rounded-lg shadow-sm">
-                          <h3 className="text-lg font-semibold mb-2">Interactive Map Visualization</h3>
+                          <h3 className="text-lg font-semibold mb-2">Karnataka Region Map</h3>
                           <p className="text-gray-600 mb-4">A full map visualization would be implemented here with markers for each land parcel, allowing users to click for detailed information.</p>
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="bg-blue-50 p-3 rounded-md">
@@ -313,11 +355,11 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
                             <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">Active</span>
                           </div>
                           <p className="text-muted-foreground mt-1 mb-2">
-                            {scheme.scheme === 'Crop Insurance' ? 'Protection against crop failure and natural disasters' : 
-                             scheme.scheme === 'Fertilizer Subsidy' ? 'Financial support for purchasing fertilizers' :
-                             scheme.scheme === 'Seed Distribution' ? 'High-quality seeds at subsidized rates' :
-                             scheme.scheme === 'Farm Equipment' ? 'Subsidies for farm machinery and tools' :
-                             'Support for irrigation infrastructure installation'}
+                            {scheme.scheme === 'PM Fasal Bima Yojana' ? 'Crop insurance scheme that provides coverage for farmers against crop loss or damage' : 
+                             scheme.scheme === 'PM Kisan Samman Nidhi' ? 'Income support scheme providing farmers with ₹6,000 per year in three equal installments' :
+                             scheme.scheme === 'Krishi Sinchayee Yojana' ? 'Irrigation scheme to improve farm productivity through efficient water usage' :
+                             scheme.scheme === 'Rashtriya Krishi Vikas Yojana' ? 'Assistance for agricultural development projects to boost production' :
+                             'Provides farmers with credit cards for short-term credit for cultivation and other needs'}
                           </p>
                           <div className="flex justify-between text-sm">
                             <div>
@@ -381,6 +423,7 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
                         max={5} 
                         step={1} 
                         onValueChange={(values) => setClusterCount(values[0])}
+                        className="cursor-pointer"
                       />
                     </div>
                     
@@ -395,6 +438,7 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
                         max={80} 
                         step={5} 
                         onValueChange={(values) => setNoiseLevel(values[0])}
+                        className="cursor-pointer"
                       />
                     </div>
 
@@ -402,14 +446,66 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
                       Regenerate Clusters
                     </Button>
 
+                    <div className="flex gap-4">
+                      <input 
+                        type="file" 
+                        ref={imageInputRef}
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <Button 
+                        variant="outline" 
+                        className="w-1/2"
+                        onClick={() => imageInputRef.current?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" /> Upload Image
+                      </Button>
+
+                      <input 
+                        type="file" 
+                        ref={jsonInputRef}
+                        onChange={handleJsonUpload}
+                        accept=".json"
+                        className="hidden"
+                      />
+                      <Button 
+                        variant="outline" 
+                        className="w-1/2"
+                        onClick={() => jsonInputRef.current?.click()}
+                      >
+                        <FileJson className="mr-2 h-4 w-4" /> Upload JSON
+                      </Button>
+                    </div>
+
+                    {selectedImage && (
+                      <div className="mt-4 p-4 border rounded-md">
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="font-medium">Uploaded Image</h4>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setSelectedImage(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <img 
+                          src={selectedImage} 
+                          alt="Uploaded aerial image" 
+                          className="max-h-40 mx-auto rounded" 
+                        />
+                      </div>
+                    )}
+
                     <div className="bg-muted p-4 rounded-md text-sm">
                       <h4 className="font-medium mb-2">Cluster Analysis Explanation</h4>
                       <p className="text-muted-foreground">
-                        This visualization demonstrates K-means clustering applied to aerial farm imagery. 
+                        This visualization demonstrates K-means clustering applied to aerial farm imagery from Indian agricultural regions. 
                         Each point represents a feature detected in the image (such as vegetation health, soil moisture, etc.). 
                         Points are grouped into {clusterCount} clusters based on similarity. 
                         In a real implementation, these clusters would help identify different zones in fields 
-                        for precision agriculture applications.
+                        for precision agriculture applications, allowing farmers to optimize resource usage.
                       </p>
                     </div>
                   </div>

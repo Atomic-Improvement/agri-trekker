@@ -92,7 +92,7 @@ const Features = () => {
             Comprehensive Agricultural Management
           </h2>
           <p className="text-muted-foreground text-lg">
-            Our platform combines detailed record keeping with advanced analytics to provide a complete solution for modern farming operations.
+            Our platform combines detailed record keeping with advanced analytics to provide a complete solution for modern farming operations in India.
           </p>
         </div>
 

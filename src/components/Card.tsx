@@ -1,26 +1,31 @@
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface CardProps extends Omit<HTMLMotionProps<"div">, "className" | "children" | "index"> {
-  className?: string;
+interface CardProps {
   children: React.ReactNode;
+  className?: string;
   index?: number;
+  onClick?: () => void;
 }
 
-const Card = ({ className, children, index = 0, ...props }: CardProps) => {
+const Card = ({ children, className, index = 0, onClick }: CardProps) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      viewport={{ once: true, margin: '-100px' }}
       className={cn(
-        'rounded-xl overflow-hidden bg-white border border-border p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1',
+        'p-6 rounded-xl border bg-card text-card-foreground shadow-sm',
         className
       )}
-      {...props}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        duration: 0.4,
+        delay: index * 0.1,
+        ease: [0.43, 0.13, 0.23, 0.96]
+      }}
+      whileHover={{ y: -5 }}
+      onClick={onClick}
     >
       {children}
     </motion.div>
