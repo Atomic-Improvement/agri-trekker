@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -9,7 +8,7 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Upload, FileJson, X } from 'lucide-react';
+import { Upload, FileJson, X, Download } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
@@ -42,22 +41,103 @@ const schemeData = [
   { scheme: 'Kisan Credit Card', applications: 210, approvals: 180, rejections: 30 },
 ];
 
-// Sample data for the clustering visualization
-const generateClusterData = (centers, pointsPerCluster, noise = 0.3) => {
-  const data = [];
-  
-  centers.forEach((center, clusterIndex) => {
-    for (let i = 0; i < pointsPerCluster; i++) {
-      data.push({
-        x: center.x + (Math.random() - 0.5) * noise,
-        y: center.y + (Math.random() - 0.5) * noise,
-        z: 1,
-        cluster: `Cluster ${clusterIndex + 1}`
-      });
-    }
-  });
-  
-  return data;
+const testDatasets = {
+  dataset1: {
+    name: "Rice Paddy Classification",
+    description: "Classification of rice paddy fields in Karnataka region based on moisture content and vegetation health",
+    explanation: "This dataset represents aerial imagery analysis of rice paddy fields in Karnataka. The clusters identify different zones based on water saturation and plant health indicators. Cluster 1 (red) shows areas with high moisture content, Cluster 2 (green) indicates healthy vegetation, and Cluster 3 (blue) represents drier areas that may need irrigation.",
+    clusterColors: ['#ff5252', '#4caf50', '#2196f3'],
+    data: [
+      { x: 0.2, y: 0.3, z: 1, cluster: "Cluster 1" },
+      { x: 0.3, y: 0.2, z: 1, cluster: "Cluster 1" },
+      { x: 0.25, y: 0.25, z: 1, cluster: "Cluster 1" },
+      { x: 0.15, y: 0.35, z: 1, cluster: "Cluster 1" },
+      { x: 0.1, y: 0.1, z: 1, cluster: "Cluster 1" },
+      { x: 0.2, y: 0.1, z: 1, cluster: "Cluster 1" },
+      { x: 0.1, y: 0.2, z: 1, cluster: "Cluster 1" },
+      { x: 0.3, y: 0.4, z: 1, cluster: "Cluster 1" },
+      { x: 0.7, y: 0.2, z: 1, cluster: "Cluster 2" },
+      { x: 0.8, y: 0.1, z: 1, cluster: "Cluster 2" },
+      { x: 0.75, y: 0.15, z: 1, cluster: "Cluster 2" },
+      { x: 0.9, y: 0.3, z: 1, cluster: "Cluster 2" },
+      { x: 0.8, y: 0.3, z: 1, cluster: "Cluster 2" },
+      { x: 0.7, y: 0.25, z: 1, cluster: "Cluster 2" },
+      { x: 0.9, y: 0.1, z: 1, cluster: "Cluster 2" },
+      { x: 0.6, y: 0.2, z: 1, cluster: "Cluster 2" },
+      { x: 0.5, y: 0.8, z: 1, cluster: "Cluster 3" },
+      { x: 0.6, y: 0.7, z: 1, cluster: "Cluster 3" },
+      { x: 0.4, y: 0.9, z: 1, cluster: "Cluster 3" },
+      { x: 0.5, y: 0.9, z: 1, cluster: "Cluster 3" },
+      { x: 0.6, y: 0.8, z: 1, cluster: "Cluster 3" },
+      { x: 0.4, y: 0.7, z: 1, cluster: "Cluster 3" },
+      { x: 0.5, y: 0.7, z: 1, cluster: "Cluster 3" },
+      { x: 0.7, y: 0.8, z: 1, cluster: "Cluster 3" }
+    ]
+  },
+  dataset2: {
+    name: "Crop Health Analysis",
+    description: "Multi-spectral analysis of crop health in Maharashtra farming regions",
+    explanation: "This visualization shows the results of multi-spectral imaging analysis of croplands in Maharashtra. The clusters identify different crop health conditions. Cluster 1 (purple) represents areas with potential pest infestation, Cluster 2 (orange) shows optimally growing crops, Cluster 3 (teal) indicates areas with nutrient deficiencies, and Cluster 4 (yellow) shows water-stressed regions. Farmers can use this data to target specific interventions in each zone.",
+    clusterColors: ['#9c27b0', '#ff9800', '#009688', '#ffd600'],
+    data: [
+      { x: 0.1, y: 0.8, z: 1, cluster: "Cluster 1" },
+      { x: 0.2, y: 0.7, z: 1, cluster: "Cluster 1" },
+      { x: 0.15, y: 0.75, z: 1, cluster: "Cluster 1" },
+      { x: 0.25, y: 0.85, z: 1, cluster: "Cluster 1" },
+      { x: 0.1, y: 0.9, z: 1, cluster: "Cluster 1" },
+      { x: 0.2, y: 0.8, z: 1, cluster: "Cluster 1" },
+      { x: 0.5, y: 0.2, z: 1, cluster: "Cluster 2" },
+      { x: 0.6, y: 0.3, z: 1, cluster: "Cluster 2" },
+      { x: 0.45, y: 0.25, z: 1, cluster: "Cluster 2" },
+      { x: 0.55, y: 0.15, z: 1, cluster: "Cluster 2" },
+      { x: 0.5, y: 0.3, z: 1, cluster: "Cluster 2" },
+      { x: 0.6, y: 0.2, z: 1, cluster: "Cluster 2" },
+      { x: 0.7, y: 0.7, z: 1, cluster: "Cluster 3" },
+      { x: 0.8, y: 0.8, z: 1, cluster: "Cluster 3" },
+      { x: 0.75, y: 0.75, z: 1, cluster: "Cluster 3" },
+      { x: 0.85, y: 0.85, z: 1, cluster: "Cluster 3" },
+      { x: 0.7, y: 0.8, z: 1, cluster: "Cluster 3" },
+      { x: 0.8, y: 0.7, z: 1, cluster: "Cluster 3" },
+      { x: 0.3, y: 0.4, z: 1, cluster: "Cluster 4" },
+      { x: 0.2, y: 0.3, z: 1, cluster: "Cluster 4" },
+      { x: 0.25, y: 0.35, z: 1, cluster: "Cluster 4" },
+      { x: 0.35, y: 0.45, z: 1, cluster: "Cluster 4" },
+      { x: 0.3, y: 0.3, z: 1, cluster: "Cluster 4" },
+      { x: 0.2, y: 0.4, z: 1, cluster: "Cluster 4" }
+    ]
+  },
+  dataset3: {
+    name: "Soil Moisture Distribution",
+    description: "Analysis of soil moisture levels across Tamil Nadu farmlands",
+    explanation: "This clustering analysis visualizes soil moisture patterns across Tamil Nadu agricultural regions based on thermal and radar satellite imagery. Cluster 1 (red) shows severely dry areas requiring immediate irrigation, Cluster 2 (orange) indicates moderately dry soil, Cluster 3 (light blue) represents optimal moisture levels, and Cluster 4 (dark blue) shows areas with potential waterlogging issues. This information helps farmers implement precision irrigation strategies and prevent crop loss from drought or excess water.",
+    clusterColors: ['#d32f2f', '#ff9800', '#29b6f6', '#0d47a1'],
+    data: [
+      { x: 0.1, y: 0.1, z: 1, cluster: "Cluster 1" },
+      { x: 0.2, y: 0.2, z: 1, cluster: "Cluster 1" },
+      { x: 0.15, y: 0.15, z: 1, cluster: "Cluster 1" },
+      { x: 0.25, y: 0.25, z: 1, cluster: "Cluster 1" },
+      { x: 0.1, y: 0.2, z: 1, cluster: "Cluster 1" },
+      { x: 0.2, y: 0.1, z: 1, cluster: "Cluster 1" },
+      { x: 0.4, y: 0.4, z: 1, cluster: "Cluster 2" },
+      { x: 0.5, y: 0.5, z: 1, cluster: "Cluster 2" },
+      { x: 0.45, y: 0.45, z: 1, cluster: "Cluster 2" },
+      { x: 0.55, y: 0.55, z: 1, cluster: "Cluster 2" },
+      { x: 0.4, y: 0.5, z: 1, cluster: "Cluster 2" },
+      { x: 0.5, y: 0.4, z: 1, cluster: "Cluster 2" },
+      { x: 0.7, y: 0.7, z: 1, cluster: "Cluster 3" },
+      { x: 0.8, y: 0.8, z: 1, cluster: "Cluster 3" },
+      { x: 0.75, y: 0.75, z: 1, cluster: "Cluster 3" },
+      { x: 0.85, y: 0.85, z: 1, cluster: "Cluster 3" },
+      { x: 0.7, y: 0.8, z: 1, cluster: "Cluster 3" },
+      { x: 0.8, y: 0.7, z: 1, cluster: "Cluster 3" },
+      { x: 0.9, y: 0.3, z: 1, cluster: "Cluster 4" },
+      { x: 0.8, y: 0.2, z: 1, cluster: "Cluster 4" },
+      { x: 0.85, y: 0.25, z: 1, cluster: "Cluster 4" },
+      { x: 0.95, y: 0.35, z: 1, cluster: "Cluster 4" },
+      { x: 0.9, y: 0.2, z: 1, cluster: "Cluster 4" },
+      { x: 0.8, y: 0.3, z: 1, cluster: "Cluster 4" }
+    ]
+  }
 };
 
 const initialClusterCenters = [
@@ -100,11 +180,30 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
   const [noiseLevel, setNoiseLevel] = useState(30);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedJson, setSelectedJson] = useState<string | null>(null);
+  const [currentDataset, setCurrentDataset] = useState<string | null>(null);
+  const [datasetDescription, setDatasetDescription] = useState<string>("");
+  const [datasetExplanation, setDatasetExplanation] = useState<string>("");
+  const [datasetColors, setDatasetColors] = useState<string[]>(aerialClusterColors);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const savedImage = localStorage.getItem('aerialImage');
+    if (savedImage) {
+      setSelectedImage(savedImage);
+    }
+    
+    const savedJson = localStorage.getItem('clusterData');
+    if (savedJson) {
+      try {
+        setSelectedJson(savedJson);
+      } catch (error) {
+        console.error("Error parsing saved JSON:", error);
+      }
+    }
+  }, []);
+
   const regenerateClusters = () => {
-    // Generate random centers
     const centers = Array.from({ length: clusterCount }, () => ({
       x: Math.random(),
       y: Math.random()
@@ -121,7 +220,6 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setSelectedImage(result);
-        // Store in localStorage
         localStorage.setItem('aerialImage', result);
         toast.success(`Image "${file.name}" uploaded and stored locally`);
       };
@@ -136,10 +234,8 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
       reader.onload = (e) => {
         try {
           const result = e.target?.result as string;
-          // Try to parse JSON to validate it
           JSON.parse(result);
           setSelectedJson(result);
-          // Store in localStorage
           localStorage.setItem('clusterData', result);
           toast.success(`JSON data "${file.name}" uploaded and stored locally`);
         } catch (error) {
@@ -150,7 +246,46 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
     }
   };
 
-  // Determine which content to show based on the feature title
+  const loadTestDataset = (datasetKey: string) => {
+    const dataset = testDatasets[datasetKey as keyof typeof testDatasets];
+    if (dataset) {
+      setCurrentDataset(datasetKey);
+      setClusterData(dataset.data);
+      setClusterCount(dataset.clusterColors.length);
+      setDatasetDescription(dataset.description);
+      setDatasetExplanation(dataset.explanation);
+      setDatasetColors(dataset.clusterColors);
+      toast.success(`Loaded ${dataset.name} dataset`);
+    }
+  };
+
+  const downloadTestDataset = (datasetKey: string) => {
+    const dataset = testDatasets[datasetKey as keyof typeof testDatasets];
+    if (dataset) {
+      const jsonData = {
+        name: dataset.name,
+        description: dataset.description,
+        explanation: dataset.explanation,
+        clusterColors: dataset.clusterColors,
+        data: dataset.data
+      };
+      
+      const dataStr = JSON.stringify(jsonData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${datasetKey}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success(`Downloaded ${dataset.name} dataset`);
+    }
+  };
+
   const renderFeatureContent = () => {
     if (!feature) return null;
 
@@ -388,10 +523,33 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
             <Card>
               <CardHeader>
                 <CardTitle>Aerial Image Clustering Analysis</CardTitle>
-                <CardDescription>Interactive clustering visualization of aerial field patterns</CardDescription>
+                <CardDescription>
+                  {currentDataset ? datasetDescription : "Interactive clustering visualization of aerial field patterns"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    {Object.entries(testDatasets).map(([key, dataset]) => (
+                      <div key={key} className="flex gap-2">
+                        <Button 
+                          onClick={() => loadTestDataset(key)} 
+                          variant={currentDataset === key ? "default" : "outline"}
+                          className="flex-1"
+                        >
+                          {dataset.name}
+                        </Button>
+                        <Button 
+                          onClick={() => downloadTestDataset(key)} 
+                          variant="outline" 
+                          size="icon"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
                   <ChartContainer config={{}} className="h-[300px]">
                     <ScatterChart>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -405,46 +563,50 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
                           key={i}
                           name={`Cluster ${i + 1}`} 
                           data={clusterData.filter(d => d.cluster === `Cluster ${i + 1}`)}
-                          fill={aerialClusterColors[i % aerialClusterColors.length]} 
+                          fill={datasetColors[i % datasetColors.length]} 
                         />
                       ))}
                     </ScatterChart>
                   </ChartContainer>
 
                   <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-2">
-                        <label className="text-sm font-medium">Number of Clusters</label>
-                        <span className="text-sm">{clusterCount}</span>
-                      </div>
-                      <Slider 
-                        value={[clusterCount]} 
-                        min={2} 
-                        max={5} 
-                        step={1} 
-                        onValueChange={(values) => setClusterCount(values[0])}
-                        className="cursor-pointer"
-                      />
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between mb-2">
-                        <label className="text-sm font-medium">Cluster Density (Noise Level)</label>
-                        <span className="text-sm">{noiseLevel}%</span>
-                      </div>
-                      <Slider 
-                        value={[noiseLevel]} 
-                        min={10} 
-                        max={80} 
-                        step={5} 
-                        onValueChange={(values) => setNoiseLevel(values[0])}
-                        className="cursor-pointer"
-                      />
-                    </div>
+                    {!currentDataset && (
+                      <>
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <label className="text-sm font-medium">Number of Clusters</label>
+                            <span className="text-sm">{clusterCount}</span>
+                          </div>
+                          <Slider 
+                            value={[clusterCount]} 
+                            min={2} 
+                            max={5} 
+                            step={1} 
+                            onValueChange={(values) => setClusterCount(values[0])}
+                            className="cursor-pointer"
+                          />
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <label className="text-sm font-medium">Cluster Density (Noise Level)</label>
+                            <span className="text-sm">{noiseLevel}%</span>
+                          </div>
+                          <Slider 
+                            value={[noiseLevel]} 
+                            min={10} 
+                            max={80} 
+                            step={5} 
+                            onValueChange={(values) => setNoiseLevel(values[0])}
+                            className="cursor-pointer"
+                          />
+                        </div>
 
-                    <Button onClick={regenerateClusters} className="w-full">
-                      Regenerate Clusters
-                    </Button>
+                        <Button onClick={regenerateClusters} className="w-full">
+                          Regenerate Clusters
+                        </Button>
+                      </>
+                    )}
 
                     <div className="flex gap-4">
                       <input 
@@ -501,11 +663,9 @@ const FeatureModal: React.FC<FeatureModalProps> = ({ isOpen, onClose, feature })
                     <div className="bg-muted p-4 rounded-md text-sm">
                       <h4 className="font-medium mb-2">Cluster Analysis Explanation</h4>
                       <p className="text-muted-foreground">
-                        This visualization demonstrates K-means clustering applied to aerial farm imagery from Indian agricultural regions. 
-                        Each point represents a feature detected in the image (such as vegetation health, soil moisture, etc.). 
-                        Points are grouped into {clusterCount} clusters based on similarity. 
-                        In a real implementation, these clusters would help identify different zones in fields 
-                        for precision agriculture applications, allowing farmers to optimize resource usage.
+                        {currentDataset 
+                          ? datasetExplanation 
+                          : "This visualization demonstrates K-means clustering applied to aerial farm imagery from Indian agricultural regions. Each point represents a feature detected in the image (such as vegetation health, soil moisture, etc.). Points are grouped into clusters based on similarity. In a real implementation, these clusters would help identify different zones in fields for precision agriculture applications, allowing farmers to optimize resource usage."}
                       </p>
                     </div>
                   </div>
